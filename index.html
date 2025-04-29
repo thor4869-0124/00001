@@ -20,6 +20,7 @@
   <h2>コメントを投稿する</h2>
   <form id="commentForm">
     <input type="text" id="usernameInput" placeholder="ユーザー名" required>
+    <input type="text" id="categoryInput" placeholder="カテゴリ（例：旅行・遊び）" required>
     <input type="text" id="commentInput" placeholder="コメントを書く…" required>
     <button type="submit">投稿</button>
   </form>
@@ -32,18 +33,14 @@
   <script>
     let uploadedImageUrl = "";
 
-    // Imgur画像アップロード処理
     document.getElementById('imageUploadForm').addEventListener('submit', async function (e) {
       e.preventDefault();
-
       const imageInput = document.getElementById('imageInput');
       const file = imageInput.files[0];
-
       if (!file) {
         alert('画像ファイルを選択してください。');
         return;
       }
-
       const formData = new FormData();
       formData.append('image', file);
 
@@ -51,7 +48,7 @@
         const response = await fetch('https://api.imgur.com/3/image', {
           method: 'POST',
           headers: {
-            Authorization: 'Client-ID 3879e9480a03506' // ← ここに取得した Client ID を入力
+            Authorization: 'Client-ID 3879e9480a03506'
           },
           body: formData
         });
@@ -61,7 +58,6 @@
         if (data.success) {
           uploadedImageUrl = data.data.link;
           alert('画像がアップロードされました: ' + uploadedImageUrl);
-          // アップロードされた画像を表示
           const uploadedImage = document.createElement('img');
           uploadedImage.src = uploadedImageUrl;
           uploadedImage.alt = 'アップロードされた画像';
@@ -78,14 +74,12 @@
       }
     });
 
-    // コメント機能の実装
     const commentForm = document.getElementById("commentForm");
     const commentList = document.getElementById("commentList");
 
-    // localStorageから既存のコメントを取得
     let comments = JSON.parse(localStorage.getItem("comments")) || [];
+    let postHistory = JSON.parse(localStorage.getItem("postHistory")) || [];
 
-    // コメントを表示する関数
     function displayComments() {
       commentList.innerHTML = "";
       comments.forEach(({ username, comment }) => {
@@ -94,9 +88,6 @@
         commentList.appendChild(newComment);
       });
     }
-
-    // 投稿履歴保存機能
-    let postHistory = JSON.parse(localStorage.getItem("postHistory")) || [];
 
     function renderPostHistory() {
       const container = document.getElementById("postHistory");
@@ -107,7 +98,7 @@
         div.style.padding = "10px";
         div.style.marginBottom = "10px";
         div.innerHTML = `
-          <strong>${post.username}</strong>（${post.date}）<br>
+          <strong>${post.username}</strong>（${post.date} / ${post.category || "カテゴリなし"}）<br>
           <p>${post.comment}</p>
           ${post.image ? `<img src="${post.image}" style="max-width:200px;">` : ""}
         `;
@@ -115,25 +106,24 @@
       });
     }
 
-    // フォームの送信イベントを処理
     commentForm.addEventListener("submit", (e) => {
       e.preventDefault();
       const username = document.getElementById("usernameInput").value.trim();
       const comment = document.getElementById("commentInput").value.trim();
-      if (username && comment) {
-        // コメント表示用の保存
+      const category = document.getElementById("categoryInput").value.trim();
+      if (username && comment && category) {
         const newComment = { username, comment };
         comments.push(newComment);
         localStorage.setItem("comments", JSON.stringify(comments));
         displayComments();
 
-        // 投稿履歴用の保存
         const date = new Date().toLocaleString();
         const newPost = {
           username,
           comment,
           image: uploadedImageUrl || "",
-          date
+          date,
+          category
         };
         postHistory.unshift(newPost);
         localStorage.setItem("postHistory", JSON.stringify(postHistory));
@@ -145,7 +135,6 @@
       }
     });
 
-    // ページ読み込み時にコメントと投稿履歴を表示
     displayComments();
     renderPostHistory();
   </script>
