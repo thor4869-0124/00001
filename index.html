@@ -25,7 +25,13 @@
   </form>
   <div id="commentList"></div>
 
+  <!-- 投稿履歴表示エリア -->
+  <h2>📚 投稿履歴</h2>
+  <div id="postHistory"></div>
+
   <script>
+    let uploadedImageUrl = "";
+
     // Imgur画像アップロード処理
     document.getElementById('imageUploadForm').addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -45,7 +51,7 @@
         const response = await fetch('https://api.imgur.com/3/image', {
           method: 'POST',
           headers: {
-            Authorization: 'Client-ID YOUR_CLIENT_ID3879e9480a03506' // ← ここに取得したClient IDを入力
+            Authorization: 'Client-ID 3879e9480a03506' // ← ここに取得した Client ID を入力
           },
           body: formData
         });
@@ -53,12 +59,14 @@
         const data = await response.json();
 
         if (data.success) {
-          const imageUrl = data.data.link;
-          alert('画像がアップロードされました: ' + imageUrl);
+          uploadedImageUrl = data.data.link;
+          alert('画像がアップロードされました: ' + uploadedImageUrl);
           // アップロードされた画像を表示
           const uploadedImage = document.createElement('img');
-          uploadedImage.src = imageUrl;
+          uploadedImage.src = uploadedImageUrl;
           uploadedImage.alt = 'アップロードされた画像';
+          uploadedImage.style.maxWidth = '200px';
+          document.getElementById('uploadedImageContainer').innerHTML = '';
           document.getElementById('uploadedImageContainer').appendChild(uploadedImage);
         } else {
           alert('画像のアップロードに失敗しました。');
@@ -87,22 +95,59 @@
       });
     }
 
+    // 投稿履歴保存機能
+    let postHistory = JSON.parse(localStorage.getItem("postHistory")) || [];
+
+    function renderPostHistory() {
+      const container = document.getElementById("postHistory");
+      container.innerHTML = "";
+      postHistory.forEach(post => {
+        const div = document.createElement("div");
+        div.style.border = "1px solid #ccc";
+        div.style.padding = "10px";
+        div.style.marginBottom = "10px";
+        div.innerHTML = `
+          <strong>${post.username}</strong>（${post.date}）<br>
+          <p>${post.comment}</p>
+          ${post.image ? `<img src="${post.image}" style="max-width:200px;">` : ""}
+        `;
+        container.appendChild(div);
+      });
+    }
+
     // フォームの送信イベントを処理
     commentForm.addEventListener("submit", (e) => {
       e.preventDefault();
       const username = document.getElementById("usernameInput").value.trim();
       const comment = document.getElementById("commentInput").value.trim();
       if (username && comment) {
+        // コメント表示用の保存
         const newComment = { username, comment };
         comments.push(newComment);
         localStorage.setItem("comments", JSON.stringify(comments));
         displayComments();
+
+        // 投稿履歴用の保存
+        const date = new Date().toLocaleString();
+        const newPost = {
+          username,
+          comment,
+          image: uploadedImageUrl || "",
+          date
+        };
+        postHistory.unshift(newPost);
+        localStorage.setItem("postHistory", JSON.stringify(postHistory));
+        renderPostHistory();
+
         commentForm.reset();
+        uploadedImageUrl = "";
+        document.getElementById('uploadedImageContainer').innerHTML = '';
       }
     });
 
-    // ページ読み込み時にコメントを表示
+    // ページ読み込み時にコメントと投稿履歴を表示
     displayComments();
+    renderPostHistory();
   </script>
 </body>
 </html>
