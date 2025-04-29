@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -85,23 +84,29 @@
   <script>
     let uploadedImageUrl = "";
     const commentForm = document.getElementById("commentForm");
-    const commentList = document.getElementById("commentList");
 
     let postHistory = JSON.parse(localStorage.getItem("postHistory")) || [];
 
     function renderPostHistory() {
       const container = document.getElementById("postHistory");
       container.innerHTML = "";
-      postHistory.forEach(post => {
+      postHistory.forEach((post, index) => {
         const div = document.createElement("div");
         div.className = "post";
         div.innerHTML = `
           <strong>${post.username}</strong>（${post.date} / ${post.category}）<br>
           <p>${post.comment}</p>
           ${post.image ? `<img src="${post.image}" alt="投稿画像">` : ""}
+          <button onclick="deletePost(${index})">削除</button>
         `;
         container.appendChild(div);
       });
+    }
+
+    function deletePost(index) {
+      postHistory.splice(index, 1);
+      localStorage.setItem("postHistory", JSON.stringify(postHistory));
+      renderPostHistory();
     }
 
     commentForm.addEventListener("submit", (e) => {
