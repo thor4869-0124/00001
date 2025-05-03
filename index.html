@@ -24,7 +24,7 @@
       padding: 1em;
       margin-bottom: 2em;
     }
-    input, button {
+    input, select, button {
       padding: 0.6em;
       margin-top: 0.5em;
       border-radius: 6px;
@@ -78,19 +78,29 @@
   </form>
   <div id="commentList"></div>
 
+  <h2>カテゴリで絞り込む</h2>
+  <select id="categoryFilter">
+    <option value="">すべて表示</option>
+    <option value="旅行">旅行</option>
+    <option value="遊び">遊び</option>
+    <option value="食事">食事</option>
+  </select>
+
   <h2>📚 投稿履歴</h2>
   <div id="postHistory"></div>
 
   <script>
     let uploadedImageUrl = "";
     const commentForm = document.getElementById("commentForm");
+    const categoryFilter = document.getElementById("categoryFilter");
 
     let postHistory = JSON.parse(localStorage.getItem("postHistory")) || [];
 
-    function renderPostHistory() {
+    function renderPostHistory(filter = "") {
       const container = document.getElementById("postHistory");
       container.innerHTML = "";
       postHistory.forEach((post, index) => {
+        if (filter && post.category !== filter) return;
         const div = document.createElement("div");
         div.className = "post";
         div.innerHTML = `
@@ -106,7 +116,7 @@
     function deletePost(index) {
       postHistory.splice(index, 1);
       localStorage.setItem("postHistory", JSON.stringify(postHistory));
-      renderPostHistory();
+      renderPostHistory(categoryFilter.value);
     }
 
     commentForm.addEventListener("submit", (e) => {
@@ -125,7 +135,7 @@
         };
         postHistory.unshift(newPost);
         localStorage.setItem("postHistory", JSON.stringify(postHistory));
-        renderPostHistory();
+        renderPostHistory(categoryFilter.value);
         commentForm.reset();
         uploadedImageUrl = "";
         document.getElementById('uploadedImageContainer').innerHTML = '';
@@ -163,6 +173,10 @@
         alert('通信エラー');
         console.error(error);
       }
+    });
+
+    categoryFilter.addEventListener("change", () => {
+      renderPostHistory(categoryFilter.value);
     });
 
     renderPostHistory();
